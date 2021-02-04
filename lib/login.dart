@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
+import 'package:flutter_config/flutter_config.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -8,9 +9,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  GoogleSignIn googleSignIn = GoogleSignIn(
-      clientId:
-          "557707736897-b3s5m9qc5c2bdluci63ibugkbibrb5fu.apps.googleusercontent.com");
+  GoogleSignIn googleSignIn =
+      GoogleSignIn(clientId: FlutterConfig.get('GOOGLE_SIGNIN_API_KEY'));
 
   @override
   Widget build(BuildContext context) {

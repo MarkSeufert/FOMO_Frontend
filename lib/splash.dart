@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_config/flutter_config.dart';
 
 class SplashScreen extends StatefulWidget {
   SplashScreen({Key key}) : super(key: key);
@@ -9,9 +10,8 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  GoogleSignIn googleSignIn = GoogleSignIn(
-      clientId:
-          "557707736897-b3s5m9qc5c2bdluci63ibugkbibrb5fu.apps.googleusercontent.com");
+  GoogleSignIn googleSignIn =
+      GoogleSignIn(clientId: FlutterConfig.get('GOOGLE_SIGNIN_API_KEY'));
 
   // User user = User();
   @override
