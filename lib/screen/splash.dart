@@ -16,7 +16,6 @@ class _SplashScreenState extends State<SplashScreen> {
   GoogleSignIn googleSignIn =
       GoogleSignIn(clientId: FlutterConfig.get('GOOGLE_SIGNIN_API_KEY'));
 
-  // User user = User();
   @override
   void initState() {
     super.initState();

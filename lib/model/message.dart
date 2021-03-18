@@ -4,8 +4,7 @@ import 'user.dart';
 
 enum MessageType {
   regular,
-  premium,
-  business,
+  ad,
 }
 
 @immutable
@@ -17,7 +16,7 @@ class Message {
     @required this.body,
     this.position,
     this.visible = true,
-    this.createdDate = '',
+    this.createdDate,
   });
 
   final User user;
@@ -32,7 +31,7 @@ class Message {
 
   final bool visible;
 
-  final String createdDate;
+  final DateTime createdDate;
 
   Message copyWith({
     MessageType typeParam,
@@ -67,12 +66,15 @@ class Message {
     addIfPresent('body', body);
     addIfPresent('position', position);
     addIfPresent('visible', visible);
-    addIfPresent('createdDate', createdDate);
+    addIfPresent('createdDate', createdDate.toString());
     return json;
   }
 
   factory Message.fromJson(Map<String, dynamic> json) {
-    User user = User.fromJson(json["user"]);
+    // DateFormat dateFormat = DateFormat("yyyy-MM-dd HH:mm:ss");
+    User user = json["user"] == null
+        ? new User(name: "anonymous user")
+        : User.fromJson(json["user"]);
     var lat = json['location']["lat"];
     var lng = json['location']["long"];
     return Message(
@@ -83,7 +85,7 @@ class Message {
       position: LatLng(
           lat is int ? lat.toDouble() : lat, lng is int ? lng.toDouble() : lng),
       visible: json['visible'],
-      createdDate: json['date'],
+      createdDate: DateTime.parse(json['date']),
     );
   }
 

@@ -27,10 +27,12 @@ class MapAPI {
   static Future<Message> postMessage(Message message) async {
     Map<String, String> queryParameters = {
       "message": message.body,
-      "userId": globals.user.id,
       "long": message.position.longitude.toString(),
       "lat": message.position.latitude.toString()
     };
+    if (globals.user.id != null) {
+      queryParameters["userId"] = globals.user.id;
+    }
     final response = await _apiProvider.post("createPost", queryParameters);
     Message postedMessage = Message.fromJson(response);
     return postedMessage;

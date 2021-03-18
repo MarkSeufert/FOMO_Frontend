@@ -9,6 +9,7 @@ import 'package:clippy_flutter/clippy_flutter.dart' hide Message;
 import 'package:custom_info_window/custom_info_window.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_config/flutter_config.dart';
+import 'package:jiffy/jiffy.dart';
 
 import '../model/user.dart';
 import '../model/message.dart';
@@ -26,6 +27,7 @@ class MapScreen extends StatefulWidget {
 }
 
 class MapScreenState extends State<MapScreen> {
+  Timer _timer;
   GoogleSignIn googleSignIn =
       GoogleSignIn(clientId: FlutterConfig.get('GOOGLE_SIGNIN_API_KEY'));
 
@@ -51,12 +53,13 @@ class MapScreenState extends State<MapScreen> {
   @override
   void dispose() {
     _customInfoWindowController.dispose();
+    _timer.cancel();
     super.dispose();
   }
 
   void setUpTimedMessageFetch() {
     int radius = 60;
-    Timer.periodic(Duration(milliseconds: 5000), (timer) {
+    _timer = Timer.periodic(Duration(milliseconds: 5000), (timer) {
       setState(() {
         _messageList = MapAPI.getMessages(radius);
       });
@@ -409,18 +412,24 @@ class MapScreenState extends State<MapScreen> {
                     style: TextStyle(fontSize: 10, color: Colors.grey),
                   ),
                 ),
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.all(8),
-                    child: SizedBox(
-                      width: 100,
-                      height: 100,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          AutoSizeText(message.body),
-                        ],
-                      ),
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: Text(
+                    "Created on: " +
+                        Jiffy(message.createdDate.toString()).yMMMMEEEEdjm,
+                    style: TextStyle(fontSize: 10, color: Colors.grey),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(8),
+                  child: SizedBox(
+                    width: 100,
+                    height: 100,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        AutoSizeText(message.body),
+                      ],
                     ),
                   ),
                 ),

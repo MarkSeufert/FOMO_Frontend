@@ -8,11 +8,11 @@ enum SignInType {
 
 class User {
   const User({
-    this.id,
     @required this.name,
+    this.id,
     this.email = '',
     this.signInType,
-    this.photoUrl = '',
+    this.photoUrl,
   });
 
   final String id;

@@ -107,6 +107,6 @@ class PostMessagePageState extends State<PostMessagePage> {
       body: body,
       position: LatLng(currentPosition.latitude, currentPosition.longitude),
     );
-    MapAPI.postMessage(message);
+    await MapAPI.postMessage(message);
   }
 }

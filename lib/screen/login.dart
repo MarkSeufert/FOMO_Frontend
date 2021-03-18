@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:fomogo/networking/response.dart';
-import 'package:uuid/uuid.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:flutter_config/flutter_config.dart';
@@ -68,9 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _signInAnonymousUser() async {
-    String tempId = Uuid().v1();
     globals.user = User(
-      id: tempId,
       name: "anonymous user",
       signInType: SignInType.ANONYMOUS,
     );

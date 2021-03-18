@@ -41,6 +41,7 @@ dependencies:
   auto_size_text: ^2.1.0
   http: ^0.13.0
   uuid: ^3.0.1
+  jiffy: ^4.0.0
 
 dev_dependencies:
   flutter_test:
