@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'map.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
-import '../model/message.dart';
-import '../util/map_util.dart';
 import 'package:group_button/group_button.dart';
 import '../globals.dart' as globals;
+import '../model/message.dart';
+import '../util/map_util.dart';
+import '../networking/map_api.dart';
 
 class PostMessagePage extends StatefulWidget {
   @override
@@ -13,8 +13,6 @@ class PostMessagePage extends StatefulWidget {
 }
 
 class PostMessagePageState extends State<PostMessagePage> {
-  static int _messageCounter = MapScreenState
-      .messageList.length; // Will be removed once api calls implemented
   List<String> messageTypes = [];
 
   String body = '';
@@ -104,15 +102,11 @@ class PostMessagePageState extends State<PostMessagePage> {
   void _addMessage() async {
     Position currentPosition = await MapUtils.determineCurrentPosition();
     final Message message = Message(
-      messageId: _messageCounter,
       user: globals.user,
       type: selectedMessageType,
       body: body,
       position: LatLng(currentPosition.latitude, currentPosition.longitude),
-      alpha: 1,
-      visible: true,
     );
-    _messageCounter++;
-    MapScreenState.messageList.add(message);
+    MapAPI.postMessage(message);
   }
 }

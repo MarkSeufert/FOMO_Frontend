@@ -11,18 +11,18 @@ enum MessageType {
 @immutable
 class Message {
   const Message({
-    @required this.messageId,
+    this.messageId,
     @required this.user,
     @required this.type,
     @required this.body,
     this.position,
-    this.alpha = 1.0,
     this.visible = true,
-  }) : assert(alpha == null || (0.0 <= alpha && alpha <= 1.0));
+    this.createdDate = '',
+  });
 
   final User user;
 
-  final int messageId;
+  final String messageId;
 
   final MessageType type;
 
@@ -30,15 +30,14 @@ class Message {
 
   final LatLng position;
 
-  final double alpha;
-
   final bool visible;
+
+  final String createdDate;
 
   Message copyWith({
     MessageType typeParam,
     String bodyParam,
     LatLng positionParam,
-    double alphaParam,
     double visibleParam,
   }) {
     return Message(
@@ -47,7 +46,6 @@ class Message {
       type: typeParam ?? type,
       body: bodyParam ?? body,
       position: positionParam ?? position,
-      alpha: alphaParam ?? alpha,
       visible: visibleParam ?? visible,
     );
   }
@@ -55,11 +53,11 @@ class Message {
   Message clone() => copyWith();
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> json = <String, dynamic>{};
+    final Map<String, dynamic> json = new Map<String, dynamic>();
 
     void addIfPresent(String fieldName, dynamic value) {
       if (value != null) {
-        json[fieldName] = value;
+        json[fieldName] = value.toString();
       }
     }
 
@@ -67,10 +65,26 @@ class Message {
     addIfPresent('user', user);
     addIfPresent('type', type);
     addIfPresent('body', body);
-    addIfPresent('position', position?.toString());
-    addIfPresent('alpha', alpha);
+    addIfPresent('position', position);
     addIfPresent('visible', visible);
+    addIfPresent('createdDate', createdDate);
     return json;
+  }
+
+  factory Message.fromJson(Map<String, dynamic> json) {
+    User user = User.fromJson(json["user"]);
+    var lat = json['location']["lat"];
+    var lng = json['location']["long"];
+    return Message(
+      messageId: json['_id'],
+      user: user,
+      type: MessageType.regular,
+      body: json['message'],
+      position: LatLng(
+          lat is int ? lat.toDouble() : lat, lng is int ? lng.toDouble() : lng),
+      visible: json['visible'],
+      createdDate: json['date'],
+    );
   }
 
   @override
@@ -82,8 +96,8 @@ class Message {
         type == typedOther.type &&
         body == typedOther.body &&
         position == typedOther.position &&
-        alpha == typedOther.alpha &&
-        visible == typedOther.visible;
+        visible == typedOther.visible &&
+        createdDate == typedOther.createdDate;
   }
 
   @override
@@ -93,6 +107,6 @@ class Message {
   String toString() {
     return 'Marker{messageId: $messageId, type: $type,'
         'body: $body, position: $position, '
-        'alpha: $alpha,visible: $visible}';
+        'visible: $visible}';
   }
 }

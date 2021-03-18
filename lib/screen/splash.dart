@@ -3,6 +3,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_config/flutter_config.dart';
 import '../globals.dart' as globals;
 import '../model/user.dart';
+import '../networking/user_api.dart';
 
 class SplashScreen extends StatefulWidget {
   SplashScreen({Key key}) : super(key: key);
@@ -41,11 +42,8 @@ class _SplashScreenState extends State<SplashScreen> {
       if (globals.user == null && isGoogleSignedIn) {
         await googleSignIn.signInSilently();
         GoogleSignInAccount account = googleSignIn.currentUser;
-        globals.user = User(
-            signInType: SignInType.GOOGLE,
-            name: account.displayName,
-            email: account.email,
-            photoUrl: account.photoUrl);
+        User user = await UserAPI.getUser(account.email, SignInType.GOOGLE);
+        globals.user = user;
         globals.isLoggedIn = true;
       }
       Navigator.pushReplacementNamed(context, '/map');

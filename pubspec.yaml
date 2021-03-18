@@ -39,6 +39,8 @@ dependencies:
   custom_info_window: ^0.0.4
   flutter_config: ^1.0.8
   auto_size_text: ^2.1.0
+  http: ^0.13.0
+  uuid: ^3.0.1
 
 dev_dependencies:
   flutter_test:

@@ -15,6 +15,7 @@ import '../model/message.dart';
 import '../util/map_util.dart';
 import '../util/permission_util.dart';
 import '../globals.dart' as globals;
+import '../networking/map_api.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 
 import 'post_message.dart';
@@ -31,8 +32,8 @@ class MapScreenState extends State<MapScreen> {
   Completer<GoogleMapController> _controller = Completer();
   CustomInfoWindowController _customInfoWindowController =
       CustomInfoWindowController();
-  Set<Marker> _markers = {}; // Will be removed once api calls implemented
-  static List<Message> messageList;
+  Set<Marker> _markers = {};
+  Future<List<Message>> _messageList;
   static final CameraPosition _kGooglePlex = CameraPosition(
     target: LatLng(37.42796133580664, -122.085749655962),
     zoom: 14.4746,
@@ -43,27 +44,23 @@ class MapScreenState extends State<MapScreen> {
       TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
   @override
   void initState() {
-    messageList = [
-      Message(
-          messageId: 1,
-          user: globals.user,
-          type: MessageType.regular,
-          body: "test body",
-          position: LatLng(36.333867, 127.395177)),
-      Message(
-          messageId: 2,
-          user: globals.user,
-          type: MessageType.regular,
-          body: "test body2",
-          position: LatLng(36.333867, 127.405177)),
-    ];
     super.initState();
+    setUpTimedMessageFetch();
   }
 
   @override
   void dispose() {
     _customInfoWindowController.dispose();
     super.dispose();
+  }
+
+  void setUpTimedMessageFetch() {
+    int radius = 60;
+    Timer.periodic(Duration(milliseconds: 5000), (timer) {
+      setState(() {
+        _messageList = MapAPI.getMessages(radius);
+      });
+    });
   }
 
   void _onMenuTapped(int index) async {
@@ -88,7 +85,7 @@ class MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
-    _initMarkers(context);
+    // _initMarkers(context);
     return new Scaffold(
       appBar: AppBar(
         title: Text("FOMOGO"),
@@ -162,38 +159,95 @@ class MapScreenState extends State<MapScreen> {
           ],
         ),
       ),
-      body: Stack(
-        children: <Widget>[
-          GoogleMap(
-            onTap: (position) {
-              _customInfoWindowController.hideInfoWindow();
-            },
-            onCameraMove: (position) {
-              _customInfoWindowController.onCameraMove();
-            },
-            onMapCreated: (GoogleMapController controller) async {
-              _controller.complete(controller);
-              _customInfoWindowController.googleMapController = controller;
-              bool hasAllPermission =
-                  await PermissionUtils.requestAllPermissions(context);
-              if (hasAllPermission) {
-                print("going to current loc");
-                await _goToCurrentLocation();
-              }
-            },
-            markers: _markers,
-            myLocationEnabled: true,
-            mapType: MapType.normal,
-            initialCameraPosition: _kGooglePlex,
-          ),
-          CustomInfoWindow(
-            controller: _customInfoWindowController,
-            height: 75,
-            width: 150,
-            offset: 50,
-          ),
-        ],
-      ),
+      body: FutureBuilder<List<Message>>(
+          future: _messageList,
+          builder:
+              (BuildContext context, AsyncSnapshot<List<Message>> snapshot) {
+            List<Widget> children;
+            if (snapshot.hasData) {
+              _initMarkers(context, snapshot.data);
+              children = <Widget>[
+                GoogleMap(
+                  onTap: (position) {
+                    _customInfoWindowController.hideInfoWindow();
+                  },
+                  onCameraMove: (position) {
+                    _customInfoWindowController.onCameraMove();
+                  },
+                  onMapCreated: (GoogleMapController controller) async {
+                    _controller.complete(controller);
+                    _customInfoWindowController.googleMapController =
+                        controller;
+                    bool hasAllPermission =
+                        await PermissionUtils.requestAllPermissions(context);
+                    if (hasAllPermission) {
+                      print("going to current loc");
+                      await _goToCurrentLocation();
+                    }
+                  },
+                  markers: _markers,
+                  myLocationEnabled: true,
+                  mapType: MapType.normal,
+                  initialCameraPosition: _kGooglePlex,
+                ),
+                CustomInfoWindow(
+                  controller: _customInfoWindowController,
+                  height: 75,
+                  width: 150,
+                  offset: 50,
+                ),
+              ];
+            } else if (snapshot.hasError) {
+              children = <Widget>[
+                Center(
+                  child: DefaultTextStyle(
+                    style: Theme.of(context).textTheme.bodyText1,
+                    textAlign: TextAlign.center,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.red,
+                          size: 60,
+                        ),
+                        Padding(
+                          padding: EdgeInsets.only(top: 16),
+                          child: Text('Error: ${snapshot.error}'),
+                        )
+                      ],
+                    ),
+                  ),
+                )
+              ];
+            } else {
+              children = <Widget>[
+                Center(
+                  child: DefaultTextStyle(
+                    style: Theme.of(context).textTheme.headline6,
+                    textAlign: TextAlign.center,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        SizedBox(
+                          child: CircularProgressIndicator(),
+                          width: 60,
+                          height: 60,
+                        ),
+                        Padding(
+                          padding: EdgeInsets.only(top: 16),
+                          child: Text('Loading data...'),
+                        )
+                      ],
+                    ),
+                  ),
+                )
+              ];
+            }
+            return Stack(
+              children: children,
+            );
+          }),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -217,11 +271,11 @@ class MapScreenState extends State<MapScreen> {
     );
   }
 
-  void _initMarkers(BuildContext context) {
-    messageList.forEach((message) {
+  void _initMarkers(BuildContext context, messages) {
+    messages.forEach((message) {
       _markers.add(
         Marker(
-          markerId: MarkerId("marker_" + message.messageId.toString()),
+          markerId: MarkerId("marker_" + message.messageId),
           position: message.position,
           onTap: () {
             _customInfoWindowController.addInfoWindow(
