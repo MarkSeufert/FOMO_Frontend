@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
@@ -6,6 +7,8 @@ import '../globals.dart' as globals;
 import '../model/message.dart';
 import '../util/map_util.dart';
 import '../networking/map_api.dart';
+import 'package:image_picker/image_picker.dart';
+import '../constants/message.dart';
 
 class PostMessagePage extends StatefulWidget {
   @override
@@ -13,17 +16,32 @@ class PostMessagePage extends StatefulWidget {
 }
 
 class PostMessagePageState extends State<PostMessagePage> {
-  List<String> messageTypes = [];
+  File _image;
+  final imagePicker = ImagePicker();
+  double _maxImagHeight = 500;
+  double _maxImageWidth = 500;
+
+  // double _attachedImagHeight = 100;
+  // double _attachedImagWidth = 100;
 
   String body = '';
-  MessageType selectedMessageType = MessageType.regular;
+  String selectedMessageType = 'regular';
 
   @override
   void initState() {
-    for (MessageType value in MessageType.values) {
-      messageTypes.add(value.toString().split('.').last);
-    }
     super.initState();
+  }
+
+  Future _getImage(ImageSource src) async {
+    final pickedFile = await imagePicker.getImage(
+        source: src, maxHeight: _maxImagHeight, maxWidth: _maxImageWidth);
+    setState(() {
+      if (pickedFile != null) {
+        _image = File(pickedFile.path);
+      } else {
+        print('No image selected.');
+      }
+    });
   }
 
   @override
@@ -34,24 +52,75 @@ class PostMessagePageState extends State<PostMessagePage> {
         ),
         body: Container(
             padding: EdgeInsets.all(20.0),
-            child: Column(children: [
+            child: ListView(padding: EdgeInsets.zero, children: <Widget>[
               Padding(
-                  padding: EdgeInsets.only(bottom: 10),
-                  child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Text("type: "),
-                        Center(
-                            child: GroupButton(
-                          isRadio: true,
-                          spacing: 10,
-                          onSelected: (index, isSelected) => setState(() {
-                            selectedMessageType = MessageType.values[index];
-                          }),
-                          buttons: messageTypes,
-                          selectedColor: Colors.blue,
-                        )),
-                      ])),
+                padding: EdgeInsets.only(bottom: 10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Container(
+                      child: Text("type"),
+                    ),
+                    Container(
+                      child: GroupButton(
+                        isRadio: true,
+                        spacing: 10,
+                        onSelected: (index, isSelected) => setState(() {
+                          selectedMessageType = MessageTypes[index];
+                        }),
+                        buttons: MessageTypes,
+                        selectedColor: Colors.blue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.only(bottom: 10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Align(
+                      alignment: Alignment.center,
+                      child: _image == null
+                          ? Text('No image selected')
+                          : Image.file(
+                              _image,
+                            ),
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.max,
+                        children: [
+                          Container(
+                            height: 40,
+                            width: 40,
+                            alignment: Alignment.center,
+                            child: IconButton(
+                              icon: const Icon(Icons.camera_alt),
+                              onPressed: () async {
+                                await _getImage(ImageSource.camera);
+                              },
+                            ),
+                          ),
+                          Container(
+                            height: 40,
+                            width: 40,
+                            alignment: Alignment.center,
+                            child: IconButton(
+                              icon: const Icon(Icons.photo),
+                              onPressed: () async {
+                                await _getImage(ImageSource.gallery);
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               TextField(
                 maxLength: 250,
                 maxLines: 5,
@@ -106,7 +175,12 @@ class PostMessagePageState extends State<PostMessagePage> {
       type: selectedMessageType,
       body: body,
       position: LatLng(currentPosition.latitude, currentPosition.longitude),
+      imageFile: _image,
     );
-    await MapAPI.postMessage(message);
+    if (_image != null) {
+      await MapAPI.postMessageWithImage(message);
+    } else {
+      await MapAPI.postMessage(message);
+    }
   }
 }

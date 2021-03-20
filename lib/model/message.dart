@@ -1,11 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:meta/meta.dart' show immutable, required;
 import 'user.dart';
-
-enum MessageType {
-  regular,
-  ad,
-}
+import 'dart:io';
 
 @immutable
 class Message {
@@ -17,13 +14,15 @@ class Message {
     this.position,
     this.visible = true,
     this.createdDate,
+    this.imagePath,
+    this.imageFile,
   });
 
   final User user;
 
   final String messageId;
 
-  final MessageType type;
+  final String type;
 
   final String body;
 
@@ -31,10 +30,31 @@ class Message {
 
   final bool visible;
 
+  final File imageFile;
+
+  final String imagePath;
+
   final DateTime createdDate;
 
+  Color get color {
+    switch (type) {
+      case 'regular':
+        {
+          return Colors.blue;
+        }
+        break;
+      case 'ad':
+        {
+          return Colors.red[300];
+        }
+        break;
+      default:
+        return Colors.blue;
+    }
+  }
+
   Message copyWith({
-    MessageType typeParam,
+    String typeParam,
     String bodyParam,
     LatLng positionParam,
     double visibleParam,
@@ -67,11 +87,11 @@ class Message {
     addIfPresent('position', position);
     addIfPresent('visible', visible);
     addIfPresent('createdDate', createdDate.toString());
+    addIfPresent('image', imagePath);
     return json;
   }
 
   factory Message.fromJson(Map<String, dynamic> json) {
-    // DateFormat dateFormat = DateFormat("yyyy-MM-dd HH:mm:ss");
     User user = json["user"] == null
         ? new User(name: "anonymous user")
         : User.fromJson(json["user"]);
@@ -80,12 +100,13 @@ class Message {
     return Message(
       messageId: json['_id'],
       user: user,
-      type: MessageType.regular,
+      type: json['messageType'],
       body: json['message'],
       position: LatLng(
           lat is int ? lat.toDouble() : lat, lng is int ? lng.toDouble() : lng),
       visible: json['visible'],
       createdDate: DateTime.parse(json['date']),
+      imagePath: json['imageFile'],
     );
   }
 

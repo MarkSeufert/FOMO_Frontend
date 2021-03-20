@@ -58,7 +58,7 @@ class MapScreenState extends State<MapScreen> {
   }
 
   void setUpTimedMessageFetch() {
-    int radius = 60;
+    int radius = 10000000000000;
     _timer = Timer.periodic(Duration(milliseconds: 5000), (timer) {
       setState(() {
         _messageList = MapAPI.getMessages(radius);
@@ -169,6 +169,8 @@ class MapScreenState extends State<MapScreen> {
             List<Widget> children;
             if (snapshot.hasData) {
               _initMarkers(context, snapshot.data);
+              double infoWindowHeight =
+                  MediaQuery.of(context).size.height * 0.2;
               children = <Widget>[
                 GoogleMap(
                   onTap: (position) {
@@ -184,7 +186,6 @@ class MapScreenState extends State<MapScreen> {
                     bool hasAllPermission =
                         await PermissionUtils.requestAllPermissions(context);
                     if (hasAllPermission) {
-                      print("going to current loc");
                       await _goToCurrentLocation();
                     }
                   },
@@ -195,7 +196,7 @@ class MapScreenState extends State<MapScreen> {
                 ),
                 CustomInfoWindow(
                   controller: _customInfoWindowController,
-                  height: 75,
+                  height: infoWindowHeight,
                   width: 150,
                   offset: 50,
                 ),
@@ -274,8 +275,11 @@ class MapScreenState extends State<MapScreen> {
     );
   }
 
+  bool notNull(Object o) => o != null;
+
   void _initMarkers(BuildContext context, messages) {
     messages.forEach((message) {
+      bool hasPhoto = message.imagePath.isNotEmpty;
       _markers.add(
         Marker(
           markerId: MarkerId("marker_" + message.messageId),
@@ -291,32 +295,44 @@ class MapScreenState extends State<MapScreen> {
                       width: double.infinity,
                       height: double.infinity,
                       decoration: BoxDecoration(
-                        color: Colors.blue,
+                        color: message.color,
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: RaisedButton(
-                        color: Colors.blue,
+                      child: ElevatedButton(
+                        style: ButtonStyle(
+                            backgroundColor: MaterialStateProperty.all<Color>(
+                                message.color)),
                         child: Padding(
                           padding: EdgeInsets.all(8),
                           child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
+                              Align(
+                                alignment: FractionalOffset.bottomRight,
+                                child: Text(
+                                  message.user.name,
+                                  style: TextStyle(
+                                      fontSize: 10, color: Colors.grey),
+                                ),
+                              ),
+                              hasPhoto
+                                  ? Container(
+                                      child: Image.network(message.imagePath,
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              0.1),
+                                    )
+                                  : null,
                               AutoSizeText(
                                 message.body,
                                 overflow: TextOverflow.ellipsis,
+                                maxLines: hasPhoto ? 1 : 5,
                                 style: TextStyle(
                                     fontSize: 15, color: Colors.white),
                               ),
-                              Expanded(
-                                child: Align(
-                                  alignment: FractionalOffset.bottomRight,
-                                  child: Text(
-                                    "created by: " + message.user.name,
-                                    style: TextStyle(
-                                        fontSize: 10, color: Colors.grey),
-                                  ),
-                                ),
-                              ),
-                            ],
+                            ].where(notNull).toList(),
                           ),
                         ),
                         onPressed: () {
@@ -328,7 +344,7 @@ class MapScreenState extends State<MapScreen> {
                   Triangle.isosceles(
                     edge: Edge.BOTTOM,
                     child: Container(
-                      color: Colors.blue,
+                      color: message.color,
                       width: 20.0,
                       height: 10.0,
                     ),
@@ -397,6 +413,9 @@ class MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _showMessageDetails(Message message) async {
+    bool hasPhoto = message.imagePath.isNotEmpty;
+    double deviceHeight = MediaQuery.of(context).size.height;
+
     return showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -424,10 +443,18 @@ class MapScreenState extends State<MapScreen> {
                   padding: EdgeInsets.all(8),
                   child: SizedBox(
                     width: 100,
-                    height: 100,
+                    height: message.imagePath.isNotEmpty
+                        ? deviceHeight * 0.6
+                        : deviceHeight * 0.3,
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
+                        Container(
+                          child: hasPhoto
+                              ? Image.network(message.imagePath,
+                                  height: deviceHeight * 0.3)
+                              : Text(''),
+                        ),
                         AutoSizeText(message.body),
                       ],
                     ),

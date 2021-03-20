@@ -25,16 +25,32 @@ class MapAPI {
   }
 
   static Future<Message> postMessage(Message message) async {
+    Map<String, String> queryParameters = _getPostQueryParams(message);
+    final response =
+        await _apiProvider.post("createPost", body: queryParameters);
+    Message postedMessage = Message.fromJson(response);
+    return postedMessage;
+  }
+
+  static Future postMessageWithImage(Message message) async {
+    Map<String, String> queryParameters = _getPostQueryParams(message);
+
+    final response = await _apiProvider.postWithImage(
+        "createPostWithImage", message.imageFile, queryParameters);
+
+    return response;
+  }
+
+  static Map<String, String> _getPostQueryParams(Message message) {
     Map<String, String> queryParameters = {
       "message": message.body,
+      "messageType": message.type.toString(),
       "long": message.position.longitude.toString(),
       "lat": message.position.latitude.toString()
     };
     if (globals.user.id != null) {
       queryParameters["userId"] = globals.user.id;
     }
-    final response = await _apiProvider.post("createPost", queryParameters);
-    Message postedMessage = Message.fromJson(response);
-    return postedMessage;
+    return queryParameters;
   }
 }
