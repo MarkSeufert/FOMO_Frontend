@@ -9,15 +9,18 @@ import 'package:clippy_flutter/clippy_flutter.dart' hide Message;
 import 'package:custom_info_window/custom_info_window.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_config/flutter_config.dart';
-import 'package:jiffy/jiffy.dart';
 
-import '../model/user.dart';
 import '../model/message.dart';
 import '../util/map_util.dart';
 import '../util/permission_util.dart';
 import '../globals.dart' as globals;
 import '../networking/map_api.dart';
 import 'package:auto_size_text/auto_size_text.dart';
+
+import '../widget/map_drawer.dart';
+import '../widget/message_dialogs.dart';
+import '../widget/error_text.dart';
+import '../widget/loading_spinner.dart';
 
 import 'post_message.dart';
 
@@ -88,7 +91,6 @@ class MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // _initMarkers(context);
     return new Scaffold(
       appBar: AppBar(
         title: Text("FOMOGO"),
@@ -115,53 +117,7 @@ class MapScreenState extends State<MapScreen> {
           ),
         ],
       ),
-      drawer: Drawer(
-        child: Column(
-          children: <Widget>[
-            Expanded(
-                child: ListView(
-              padding: EdgeInsets.zero,
-              children: <Widget>[
-                SizedBox(
-                    height: 120.0,
-                    child: DrawerHeader(
-                      child: Align(
-                        alignment: Alignment.center,
-                        child: Text(globals.user.name ?? '',
-                            style:
-                                TextStyle(fontSize: 20, color: Colors.white)),
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.blue,
-                      ),
-                    )),
-                ListTile(
-                  title: Text('close'),
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
-                ),
-              ],
-            )),
-            Container(
-                child: Align(
-                    alignment: FractionalOffset.bottomRight,
-                    child: Container(
-                        child: Column(
-                      children: <Widget>[
-                        Divider(),
-                        ListTile(
-                          leading: Icon(Icons.logout),
-                          title: Text('Log out'),
-                          onTap: () async {
-                            _showSignOutDialog();
-                          },
-                        ),
-                      ],
-                    )))),
-          ],
-        ),
-      ),
+      drawer: mapDrawer(context),
       body: FutureBuilder<List<Message>>(
           future: _messageList,
           builder:
@@ -203,50 +159,10 @@ class MapScreenState extends State<MapScreen> {
               ];
             } else if (snapshot.hasError) {
               children = <Widget>[
-                Center(
-                  child: DefaultTextStyle(
-                    style: Theme.of(context).textTheme.bodyText1,
-                    textAlign: TextAlign.center,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        const Icon(
-                          Icons.error_outline,
-                          color: Colors.red,
-                          size: 60,
-                        ),
-                        Padding(
-                          padding: EdgeInsets.only(top: 16),
-                          child: Text('Error: ${snapshot.error}'),
-                        )
-                      ],
-                    ),
-                  ),
-                )
+                Center(child: errorText(snapshot.error, context))
               ];
             } else {
-              children = <Widget>[
-                Center(
-                  child: DefaultTextStyle(
-                    style: Theme.of(context).textTheme.headline6,
-                    textAlign: TextAlign.center,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        SizedBox(
-                          child: CircularProgressIndicator(),
-                          width: 60,
-                          height: 60,
-                        ),
-                        Padding(
-                          padding: EdgeInsets.only(top: 16),
-                          child: Text('Loading data...'),
-                        )
-                      ],
-                    ),
-                  ),
-                )
-              ];
+              children = <Widget>[Center(child: loadingDataSpinner(context))];
             }
             return Stack(
               children: children,
@@ -336,7 +252,7 @@ class MapScreenState extends State<MapScreen> {
                           ),
                         ),
                         onPressed: () {
-                          _showMessageDetails(message);
+                          showMessageDetails(message, context);
                         },
                       ),
                     ),
@@ -372,107 +288,5 @@ class MapScreenState extends State<MapScreen> {
     } else {
       await PermissionUtils.showLocationServiceDialog(context);
     }
-  }
-
-  Future<void> _showSignOutDialog() async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Log out'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Text('Are you you want to log out?'),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('YES'),
-              onPressed: () async {
-                Navigator.of(context).pop();
-                if (globals.user.signInType == SignInType.GOOGLE) {
-                  await googleSignIn.signOut();
-                }
-                globals.user = null;
-                Navigator.pushReplacementNamed(context, '/login');
-              },
-            ),
-            TextButton(
-              child: Text('NO'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _showMessageDetails(Message message) async {
-    bool hasPhoto = message.imagePath.isNotEmpty;
-    double deviceHeight = MediaQuery.of(context).size.height;
-
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Align(
-                  alignment: Alignment.topRight,
-                  child: Text(
-                    "Author: " + message.user.name,
-                    style: TextStyle(fontSize: 10, color: Colors.grey),
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.bottomRight,
-                  child: Text(
-                    "Created on: " +
-                        Jiffy(message.createdDate.toString()).yMMMMEEEEdjm,
-                    style: TextStyle(fontSize: 10, color: Colors.grey),
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.all(8),
-                  child: SizedBox(
-                    width: 100,
-                    height: message.imagePath.isNotEmpty
-                        ? deviceHeight * 0.6
-                        : deviceHeight * 0.3,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Container(
-                          child: hasPhoto
-                              ? Image.network(message.imagePath,
-                                  height: deviceHeight * 0.3)
-                              : Text(''),
-                        ),
-                        AutoSizeText(message.body),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Close'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
   }
 }
