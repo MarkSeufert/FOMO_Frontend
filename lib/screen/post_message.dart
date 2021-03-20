@@ -21,9 +21,6 @@ class PostMessagePageState extends State<PostMessagePage> {
   double _maxImagHeight = 500;
   double _maxImageWidth = 500;
 
-  // double _attachedImagHeight = 100;
-  // double _attachedImagWidth = 100;
-
   String body = '';
   String selectedMessageType = 'regular';
 
@@ -47,103 +44,110 @@ class PostMessagePageState extends State<PostMessagePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text("Create Message"),
-        ),
-        body: Container(
-            padding: EdgeInsets.all(20.0),
-            child: ListView(padding: EdgeInsets.zero, children: <Widget>[
-              Padding(
-                padding: EdgeInsets.only(bottom: 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Container(
-                      child: Text("type"),
+      appBar: AppBar(
+        title: Text("Create Message"),
+      ),
+      body: Container(
+        padding: EdgeInsets.all(20.0),
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            Padding(
+              padding: EdgeInsets.only(bottom: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Container(
+                    child: Text("type"),
+                  ),
+                  Container(
+                    child: GroupButton(
+                      isRadio: true,
+                      spacing: 10,
+                      onSelected: (index, isSelected) => setState(() {
+                        selectedMessageType = MessageTypes[index];
+                      }),
+                      buttons: MessageTypes,
+                      selectedColor: Colors.blue,
                     ),
-                    Container(
-                      child: GroupButton(
-                        isRadio: true,
-                        spacing: 10,
-                        onSelected: (index, isSelected) => setState(() {
-                          selectedMessageType = MessageTypes[index];
-                        }),
-                        buttons: MessageTypes,
-                        selectedColor: Colors.blue,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              Padding(
-                padding: EdgeInsets.only(bottom: 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Align(
-                      alignment: Alignment.center,
-                      child: _image == null
-                          ? Text('No image selected')
-                          : Image.file(
-                              _image,
-                            ),
-                    ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.max,
-                        children: [
-                          Container(
-                            height: 40,
-                            width: 40,
-                            alignment: Alignment.center,
-                            child: IconButton(
-                              icon: const Icon(Icons.camera_alt),
-                              onPressed: () async {
-                                await _getImage(ImageSource.camera);
-                              },
-                            ),
+            ),
+            Padding(
+              padding: EdgeInsets.only(bottom: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Align(
+                    alignment: Alignment.center,
+                    child: _image == null
+                        ? Text('No image selected')
+                        : Image.file(
+                            _image,
                           ),
-                          Container(
-                            height: 40,
-                            width: 40,
-                            alignment: Alignment.center,
-                            child: IconButton(
-                              icon: const Icon(Icons.photo),
-                              onPressed: () async {
-                                await _getImage(ImageSource.gallery);
-                              },
-                            ),
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.max,
+                      children: [
+                        Container(
+                          height: 40,
+                          width: 40,
+                          alignment: Alignment.center,
+                          child: IconButton(
+                            icon: const Icon(Icons.camera_alt),
+                            onPressed: () async {
+                              await _getImage(ImageSource.camera);
+                            },
                           ),
-                        ],
-                      ),
+                        ),
+                        Container(
+                          height: 40,
+                          width: 40,
+                          alignment: Alignment.center,
+                          child: IconButton(
+                            icon: const Icon(Icons.photo),
+                            onPressed: () async {
+                              await _getImage(ImageSource.gallery);
+                            },
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              TextField(
-                maxLength: 250,
-                maxLines: 5,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                ),
-                onSubmitted: (String value) async {
+            ),
+            TextField(
+              maxLength: 250,
+              maxLines: 5,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+              ),
+              onSubmitted: (String value) async {
+                await _postMessageDialog(context);
+              },
+              onChanged: (value) {
+                setState(() {
+                  body = value;
+                });
+              },
+            ),
+            Container(
+              alignment: Alignment.centerRight,
+              child: ElevatedButton(
+                onPressed: () async {
                   await _postMessageDialog(context);
                 },
-                onChanged: (value) {
-                  setState(() {
-                    body = value;
-                  });
-                },
+                child: Text("Post"),
               ),
-              Container(
-                  alignment: Alignment.centerRight,
-                  child: ElevatedButton(
-                      onPressed: () async {
-                        await _postMessageDialog(context);
-                      },
-                      child: Text("Post"))),
-            ])));
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   _postMessageDialog(BuildContext context) async {

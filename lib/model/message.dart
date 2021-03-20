@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:meta/meta.dart' show immutable, required;
+import 'package:meta/meta.dart' show required;
 import 'user.dart';
 import 'dart:io';
+import 'comment.dart';
 
-@immutable
 class Message {
-  const Message({
-    this.messageId,
+  Message({
+    this.id,
     @required this.user,
     @required this.type,
     @required this.body,
@@ -20,7 +20,7 @@ class Message {
 
   final User user;
 
-  final String messageId;
+  final String id;
 
   final String type;
 
@@ -35,6 +35,8 @@ class Message {
   final String imagePath;
 
   final DateTime createdDate;
+
+  Future<List<Comment>> comments;
 
   Color get color {
     switch (type) {
@@ -60,7 +62,7 @@ class Message {
     double visibleParam,
   }) {
     return Message(
-      messageId: messageId,
+      id: id,
       user: user,
       type: typeParam ?? type,
       body: bodyParam ?? body,
@@ -80,7 +82,7 @@ class Message {
       }
     }
 
-    addIfPresent('messageId', messageId);
+    addIfPresent('id', id);
     addIfPresent('user', user);
     addIfPresent('type', type);
     addIfPresent('body', body);
@@ -98,7 +100,7 @@ class Message {
     var lat = json['location']["lat"];
     var lng = json['location']["long"];
     return Message(
-      messageId: json['_id'],
+      id: json['_id'],
       user: user,
       type: json['messageType'],
       body: json['message'],
@@ -115,7 +117,7 @@ class Message {
     if (identical(this, other)) return true;
     if (other.runtimeType != runtimeType) return false;
     final Message typedOther = other;
-    return messageId == typedOther.messageId &&
+    return id == typedOther.id &&
         type == typedOther.type &&
         body == typedOther.body &&
         position == typedOther.position &&
@@ -124,11 +126,11 @@ class Message {
   }
 
   @override
-  int get hashCode => messageId.hashCode;
+  int get hashCode => id.hashCode;
 
   @override
   String toString() {
-    return 'Marker{messageId: $messageId, type: $type,'
+    return 'Marker{id: $id, type: $type,'
         'body: $body, position: $position, '
         'visible: $visible}';
   }

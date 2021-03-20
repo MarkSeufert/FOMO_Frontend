@@ -44,7 +44,6 @@ class ApiProvider {
       "image": await MultipartFile.fromFile(imageFile.path,
           filename: basename(imageFile.path)),
     });
-    String dd = _getFullUrl(url);
     try {
       final response = await Dio().post(_getFullUrl(url),
           data: formData, queryParameters: queryParameters);

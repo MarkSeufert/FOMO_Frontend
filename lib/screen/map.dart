@@ -61,7 +61,7 @@ class MapScreenState extends State<MapScreen> {
   }
 
   void setUpTimedMessageFetch() {
-    int radius = 10000000000000;
+    int radius = 5000; //5km
     _timer = Timer.periodic(Duration(milliseconds: 5000), (timer) {
       setState(() {
         _messageList = MapAPI.getMessages(radius);
@@ -198,7 +198,7 @@ class MapScreenState extends State<MapScreen> {
       bool hasPhoto = message.imagePath.isNotEmpty;
       _markers.add(
         Marker(
-          markerId: MarkerId("marker_" + message.messageId),
+          markerId: MarkerId("marker_" + message.id),
           position: message.position,
           onTap: () {
             _customInfoWindowController.addInfoWindow(

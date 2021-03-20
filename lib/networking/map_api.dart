@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 
 import '../util/map_util.dart';
 import '../globals.dart' as globals;
+import '../model/comment.dart';
 
 class MapAPI {
   static ApiProvider _apiProvider = ApiProvider();
@@ -13,7 +14,8 @@ class MapAPI {
     Map<String, dynamic> param = {
       "radius": radius.toString(),
       "lat": position.latitude.toString(),
-      "long": position.longitude.toString()
+      "long": position.longitude.toString(),
+      "expiry": "24",
     };
     final response = await _apiProvider.get("posts", param);
     List<Map> messages = new List<Map>.from(response);
@@ -24,8 +26,19 @@ class MapAPI {
     return messageList;
   }
 
+  static Future<List<Comment>> getComments(String messageId) async {
+    Map<String, dynamic> param = {"postId": messageId};
+    final response = await _apiProvider.get("comments", param);
+    List<Map> comments = new List<Map>.from(response);
+    List<Comment> commentList = [];
+    comments.forEach((comment) {
+      commentList.add(Comment.fromJson(comment));
+    });
+    return commentList;
+  }
+
   static Future<Message> postMessage(Message message) async {
-    Map<String, String> queryParameters = _getPostQueryParams(message);
+    Map<String, String> queryParameters = _getMessagePostQueryParams(message);
     final response =
         await _apiProvider.post("createPost", body: queryParameters);
     Message postedMessage = Message.fromJson(response);
@@ -33,7 +46,7 @@ class MapAPI {
   }
 
   static Future postMessageWithImage(Message message) async {
-    Map<String, String> queryParameters = _getPostQueryParams(message);
+    Map<String, String> queryParameters = _getMessagePostQueryParams(message);
 
     final response = await _apiProvider.postWithImage(
         "createPostWithImage", message.imageFile, queryParameters);
@@ -41,12 +54,31 @@ class MapAPI {
     return response;
   }
 
-  static Map<String, String> _getPostQueryParams(Message message) {
+  static Future<Comment> postComment(Comment comment) async {
+    Map<String, String> queryParameters = _getCommentPostQueryParams(comment);
+    final response =
+        await _apiProvider.post("addComment", body: queryParameters);
+    Comment addedComment = Comment.fromJson(response);
+    return addedComment;
+  }
+
+  static Map<String, String> _getMessagePostQueryParams(Message message) {
     Map<String, String> queryParameters = {
       "message": message.body,
       "messageType": message.type.toString(),
       "long": message.position.longitude.toString(),
       "lat": message.position.latitude.toString()
+    };
+    if (globals.user.id != null) {
+      queryParameters["userId"] = globals.user.id;
+    }
+    return queryParameters;
+  }
+
+  static Map<String, String> _getCommentPostQueryParams(Comment comment) {
+    Map<String, String> queryParameters = {
+      "message": comment.message,
+      "postId": comment.postId
     };
     if (globals.user.id != null) {
       queryParameters["userId"] = globals.user.id;
