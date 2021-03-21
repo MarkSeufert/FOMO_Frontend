@@ -13,9 +13,8 @@ class UserAPI {
 
   static Future<User> createUser(
       String username, String email, SignInType signInType) async {
-    Map<String, dynamic> param = {"email": email, "name": username};
-    final response =
-        await _apiProvider.post("createUser", queryParameters: param);
+    Map<String, dynamic> body = {"email": email, "name": username};
+    final response = await _apiProvider.post("createUser", body: body);
     User user = User.fromJson(response, signInType: signInType);
     return user;
   }
